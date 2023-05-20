@@ -39,12 +39,11 @@ class Env(gym.Env):
         self.guessNum = 0
         self.guessList = readWordsAndLettersFrequency("word/Words.csv")
         self.wordList = readWords("word/Words.csv")
-        self.action_space = MultiDiscrete((6, 20))
+        self.action_space = MultiDiscrete((5, 20))
         self.observation_space = spaces.Box(0, len(self.guessList), shape=(self.numOfAttempts + 3,), dtype=np.int32)
         self.maxMatchWords = readWords("word/MaxMatchWords.csv")
         self.maxMatchLetters = readWords("word/MaxMatchLetters.csv")
         self.maxSharedLetters = readWords("word/MaxSharedLetters.csv")
-        self.minLevWords = readWords("word/MinLevWords.csv")
         # Reset
         self.observationHistory = None
         self.solution = None
@@ -52,8 +51,6 @@ class Env(gym.Env):
         self.wrongPositions = None
         self.correctLetters = None
         self.incorrectLetters = None
-        # Debug
-        self.actionDistribution = {}
 
     def reset(self):
         self.solution = self.wordList[np.random.randint(len(self.wordList))]
@@ -68,16 +65,7 @@ class Env(gym.Env):
         self.wrongPositions = {}
         self.incorrectLetters = []
         self.episodeCount += 1
-
-        # Debug
-        if self.episodeCount % 100 == 0: print(f"\nEpisode Count: {self.episodeCount}")
-        if self.episodeCount == 0:
-            self.actionDistribution = {}
-        elif self.episodeCount % 1000 == 0:
-            with open("log/ActionDistribution.csv", "a") as f1:
-                f1.write(f"Episode Count: {self.episodeCount}\n{self.actionDistribution}\n")
-            self.actionDistribution = {}
-
+        if self.episodeCount % 100 == 0: print(f"\nEpisode Count: {self.episodeCount}")  # Debug
         return self.observationHistory
 
     def processGuess(self, guess):
@@ -114,7 +102,8 @@ class Env(gym.Env):
                             wrongPositionsAddedCurrentStep.append(guessChars[i])
                 else:
                     self.incorrectLetters.append(guessChars[i])
-            self.observationHistory = [len(self.correctLetters), sum([len(v) for v in self.wrongPositions.values()]), len(self.incorrectLetters)] + self.observationHistory[3:]
+            self.observationHistory = [len(self.correctLetters), sum([len(v) for v in self.wrongPositions.values()]),
+                                       len(self.incorrectLetters)] + self.observationHistory[3:]
             self.observationHistory[3 + self.guessNum] = self.wordList.index(guess)
             currentReward = -1
         self.guessNum += 1
@@ -130,20 +119,9 @@ class Env(gym.Env):
             1: self.maxMatchWords[choice],  # Maior Correspondência de Palavras
             2: self.maxMatchLetters[choice],  # Maior Correspondência de Letras
             3: self.maxSharedLetters[choice],  # Maior Compartilhamento de Letras
-            4: self.minLevWords[choice] if self.minLevWords[choice] not in self.choices else self.choices.append(self.minLevWords[choice]),  # Menor Distância de Levenshtein
-            5: random.choice(self.findCandidateWords())[0],  # Aleatório
+            4: random.choice(self.findCandidateWords())[0],  # Aleatório
         }
-        self.getActionDistribution(action)  # Debug
         return self.processGuess(actionGuessMap.get(action))
-
-    def getActionDistribution(self, action):
-        if tuple(self.observationHistory[:2]) in self.actionDistribution:
-            if action in self.actionDistribution[tuple(self.observationHistory[:2])]:
-                self.actionDistribution[tuple(self.observationHistory[:2])][action] += 1
-            else:
-                self.actionDistribution[tuple(self.observationHistory[:2])][action] = 1
-        else:
-            self.actionDistribution[tuple(self.observationHistory[:2])] = {action: 1}
 
     def isCandidate(self, wordChars):
         correctPositions = self.correctLetters.keys()
@@ -154,12 +132,14 @@ class Env(gym.Env):
                 return False
         for correctLetter, incorrectPositions in self.wrongPositions.items():
             letterIndexes = [j for j, x in enumerate(wordChars) if equalsIgnoreAccent(x, correctLetter)]
-            if not any(equalsIgnoreAccent(correctLetter, x) for x in wordChars) or np.all(letterIndexes == incorrectPositions):
+            if not any(equalsIgnoreAccent(correctLetter, x) for x in wordChars) or np.all(
+                    letterIndexes == incorrectPositions):
                 return False
         return True
 
     def findCandidateWords(self):
-        return [(word, freq) for word, freq in self.guessList if word not in self.guesses and self.isCandidate(list(word))]
+        return [(word, freq) for word, freq in self.guessList if
+                word not in self.guesses and self.isCandidate(list(word))]
 
     def printResult(self, letter: str, index):
         if index in self.correctLetters and self.correctLetters[index] == letter:

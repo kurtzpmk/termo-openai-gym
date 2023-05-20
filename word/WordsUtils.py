@@ -1,25 +1,6 @@
 from collections import Counter
 
 import pandas as pd
-from Levenshtein import distance as levDistance
-
-
-def findMinLevenshteinDistanceSum(solutions):
-    distanceSum = {}
-    for i, word in enumerate(solutions):
-        word = word[0]
-        for comparedWord in solutions[i + 1:]:
-            comparedWord = comparedWord[0]
-            if comparedWord not in distanceSum:
-                distanceSum[comparedWord] = 0
-            distance = levDistance(comparedWord, word)
-            distanceSum[comparedWord] += distance
-            distanceSum[word] = distanceSum.get(word, 0) + distance
-    sortedDistanceSum = sorted(distanceSum.items(), key=lambda x: x[1])
-    with open("MinLevWords.csv", "w", encoding="utf-8") as f1:
-        for word, count in sortedDistanceSum[:20]:
-            f1.write(word + '\n')
-
 
 def findMaxSharedLetters(solutions):
     sharedLetterCounts = {}
@@ -60,7 +41,6 @@ def findMaxCommonPositions(solutions):
 
 def main():
     solutions = [(w, Counter(w)) for w in pd.read_csv("Words.csv", header=None, encoding="utf-8")[0]]
-    findMinLevenshteinDistanceSum(solutions)
     findMaxSharedLetters(solutions)
     findMaxCommonPositions(solutions)
 
