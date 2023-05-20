@@ -52,7 +52,7 @@ class Env(gym.Env):
         self.correctLetters = None
         self.incorrectLetters = None
 
-    def reset(self):
+    def reset(self, **kwargs):
         self.solution = self.wordList[np.random.randint(len(self.wordList))]
         self.guessNum = 0
         self.guesses = []
@@ -132,14 +132,12 @@ class Env(gym.Env):
                 return False
         for correctLetter, incorrectPositions in self.wrongPositions.items():
             letterIndexes = [j for j, x in enumerate(wordChars) if equalsIgnoreAccent(x, correctLetter)]
-            if not any(equalsIgnoreAccent(correctLetter, x) for x in wordChars) or np.all(
-                    letterIndexes == incorrectPositions):
+            if not any(equalsIgnoreAccent(correctLetter, x) for x in wordChars) or np.all(letterIndexes == incorrectPositions):
                 return False
         return True
 
     def findCandidateWords(self):
-        return [(word, freq) for word, freq in self.guessList if
-                word not in self.guesses and self.isCandidate(list(word))]
+        return [(word, freq) for word, freq in self.guessList if word not in self.guesses and self.isCandidate(list(word))]
 
     def printResult(self, letter: str, index):
         if index in self.correctLetters and self.correctLetters[index] == letter:
