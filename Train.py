@@ -10,8 +10,6 @@ if __name__ == "__main__":
     agent = RLAgent(env)
     agent.trainAgent(1000000, evaluationEnv)
 
-    # agent.save()
-
     # env = Env()
     # agent = RLAgent(env, "model/A2C.zip")
     # agent.runTrainedAgent(env, 10)

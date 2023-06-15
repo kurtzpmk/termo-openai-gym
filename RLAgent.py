@@ -19,10 +19,6 @@ class RLAgent:
     def trainAgent(self, totalSteps, evaluationEnv):
         self.model.learn(totalSteps, tb_log_name="PPO", callback=EvalCallback(evaluationEnv, best_model_save_path="model/", log_path="log/"))
 
-    def save(self):
-        currentTime = date.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.model.save(f"{currentTime}_PPO")
-
     def runTrainedAgent(self, env, totalEpisodes):
         guessesNum = []
         for episodeCount in range(totalEpisodes):
