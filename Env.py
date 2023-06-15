@@ -39,11 +39,8 @@ class Env(gym.Env):
         self.guessNum = 0
         self.guessList = readWordsAndLettersFrequency("word/Words.csv")
         self.wordList = readWords("word/Words.csv")
-        self.action_space = MultiDiscrete((5, 20))
+        self.action_space = MultiDiscrete((2, 20))
         self.observation_space = spaces.Box(0, len(self.guessList), shape=(self.numOfAttempts + 3,), dtype=np.int32)
-        self.maxMatchWords = readWords("word/MaxMatchWords.csv")
-        self.maxMatchLetters = readWords("word/MaxMatchLetters.csv")
-        self.maxSharedLetters = readWords("word/MaxSharedLetters.csv")
         # Reset
         self.observationHistory = None
         self.solution = None
@@ -71,6 +68,8 @@ class Env(gym.Env):
     def processGuess(self, guess):
         isDone = False
         wrongPositionsAddedCurrentStep = []
+        prevCorrect = len(self.correctLetters)
+        prevIncorrect = len(self.incorrectLetters)
         if all(equalsIgnoreAccent(a, b) for a, b in zip(guess, self.solution)):
             isDone = True
             currentReward = self.numOfAttempts
@@ -106,6 +105,9 @@ class Env(gym.Env):
                                        len(self.incorrectLetters)] + self.observationHistory[3:]
             self.observationHistory[3 + self.guessNum] = self.wordList.index(guess)
             currentReward = -1
+            correctDiff = len(self.correctLetters) - prevCorrect
+            incorrectDiff = len(self.incorrectLetters) - prevIncorrect
+            currentReward += correctDiff - incorrectDiff
         self.guessNum += 1
         self.guesses.append(guess)
         if self.guessNum == self.numOfAttempts: isDone = True
@@ -116,10 +118,7 @@ class Env(gym.Env):
         action, choice = action
         actionGuessMap = {
             0: self.guessList[choice][0],  # Inicial
-            1: self.maxMatchWords[choice],  # Maior Correspondência de Palavras
-            2: self.maxMatchLetters[choice],  # Maior Correspondência de Letras
-            3: self.maxSharedLetters[choice],  # Maior Compartilhamento de Letras
-            4: random.choice(self.findCandidateWords())[0],  # Aleatório
+            1: random.choice(self.findCandidateWords())[0],  # Aleatório
         }
         return self.processGuess(actionGuessMap.get(action))
 

@@ -8,10 +8,10 @@ if __name__ == "__main__":
     evaluationEnv = Env()
     evaluationEnv = Monitor(evaluationEnv)
     agent = RLAgent(env)
-    agent.trainAgent(5000000, evaluationEnv)
+    agent.trainAgent(1000000, evaluationEnv)
 
-    agent.save()
+    # agent.save()
 
     # env = Env()
-    # agent = RLAgent(env, "model/best_model.zip")
+    # agent = RLAgent(env, "model/A2C.zip")
     # agent.runTrainedAgent(env, 10)
